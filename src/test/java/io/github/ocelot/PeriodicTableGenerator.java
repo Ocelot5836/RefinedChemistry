@@ -3,12 +3,16 @@ package io.github.ocelot;
 import com.google.common.base.Charsets;
 import com.google.gson.*;
 import io.github.ocelot.refinedchemistry.RefinedChemistry;
+import io.github.ocelot.refinedchemistry.common.element.ChemistryElementState;
+import io.github.ocelot.refinedchemistry.common.element.PeriodicTableSection;
 import net.minecraft.util.text.ITextComponent;
 import org.apache.commons.io.IOUtils;
 
+import javax.annotation.Nullable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -16,12 +20,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PeriodicTableGenerator
 {
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Element.class, new Element.Serializer()).setPrettyPrinting().create();
-
+    private static final Pattern ATOMIC_MASS_PATTERN = Pattern.compile("\\(\\d+\\)");
 
     public static void main(String[] args) throws IOException
     {
@@ -103,7 +108,7 @@ public class PeriodicTableGenerator
 
     private static class Element
     {
-        private final String atomicMass;
+        private final double atomicMass;
         private final int atomicNumber;
         private final int atomicRadius;
         private final int boilingPoint;
@@ -113,18 +118,19 @@ public class PeriodicTableGenerator
         private final int electronAffinity;
         private final double electronegativity;
         private final String electronicConfiguration;
-        private final String groupBlock;
+        private final PeriodicTableSection groupBlock;
         private final String ionRadius;
         private final int ionizationEnergy;
         private final int meltingPoint;
         private final String name;
         private final String oxidationStates;
-        private final String standardState;
+        @Nullable
+        private final ChemistryElementState standardState;
         private final String symbol;
         private final int vanDelWaalsRadius;
         private final int yearDiscovered;
 
-        private Element(String atomicMass, int atomicNumber, int atomicRadius, int boilingPoint, String bondingType, int cpkColor, double density, int electronAffinity, double electronegativity, String electronicConfiguration, String groupBlock, String ionRadius, int ionizationEnergy, int meltingPoint, String name, String oxidationStates, String standardState, String symbol, int vanDelWaalsRadius, int yearDiscovered)
+        private Element(double atomicMass, int atomicNumber, int atomicRadius, int boilingPoint, String bondingType, int cpkColor, double density, int electronAffinity, double electronegativity, String electronicConfiguration, PeriodicTableSection groupBlock, String ionRadius, int ionizationEnergy, int meltingPoint, String name, String oxidationStates, @Nullable ChemistryElementState standardState, String symbol, int vanDelWaalsRadius, int yearDiscovered)
         {
             this.atomicMass = atomicMass;
             this.atomicNumber = atomicNumber;
@@ -148,6 +154,11 @@ public class PeriodicTableGenerator
             this.yearDiscovered = yearDiscovered;
         }
 
+        private static double getAtomicMass(String atomicMass)
+        {
+            return Double.parseDouble(ATOMIC_MASS_PATTERN.matcher(atomicMass).replaceAll(""));
+        }
+
         public String getTranslationKey(boolean insertLiteral)
         {
             return "element." + (insertLiteral ? RefinedChemistry.MOD_ID : "\" + RefinedChemistry.MOD_ID + \"") + "." + this.name.toLowerCase(Locale.ROOT).replaceAll(" ", "_");
@@ -161,11 +172,14 @@ public class PeriodicTableGenerator
                 {
                     if ("name".equals(field.getName()))
                         return "new TranslationTextComponent(\"" + this.getTranslationKey(false) + "\")";
+
                     Object value = field.get(this);
                     if ("cpkColor".equals(field.getName()))
-                        return "0x" + Integer.toHexString((Integer) value);
+                        return ((Integer) value) == 68 ? "0x00e675" : "0x" + Integer.toHexString((Integer) value);
                     if (CharSequence.class.isAssignableFrom(field.getType()))
                         return "\"" + value + "\"";
+                    if (value != null && Enum.class.isAssignableFrom(field.getType()))
+                        return field.getType().getSimpleName() + "." + value;
                     return String.valueOf(value);
                 }
                 catch (Exception e)
@@ -178,12 +192,12 @@ public class PeriodicTableGenerator
 
         public static void addFields(StringBuilder builder)
         {
-            builder.append(Arrays.stream(Element.class.getDeclaredFields()).map(field -> "private final " + processType(field.getName(), field.getType()).getSimpleName() + " " + field.getName() + ";").collect(Collectors.joining()));
+            builder.append(Arrays.stream(Element.class.getDeclaredFields()).map(field -> "private final " + processType(field).getSimpleName() + " " + field.getName() + ";").collect(Collectors.joining()));
         }
 
         public static void addConstructorParams(StringBuilder builder)
         {
-            builder.append(Arrays.stream(Element.class.getDeclaredFields()).map(field -> processType(field.getName(), field.getType()).getSimpleName() + " " + field.getName()).collect(Collectors.joining(", ")));
+            builder.append(Arrays.stream(Element.class.getDeclaredFields()).map(field -> processAnnotations(field) + processType(field).getSimpleName() + " " + field.getName()).collect(Collectors.joining(", ")));
         }
 
         public static void addConstructorSetters(StringBuilder builder)
@@ -193,12 +207,17 @@ public class PeriodicTableGenerator
 
         public static void addGetters(StringBuilder builder)
         {
-            builder.append(Arrays.stream(Element.class.getDeclaredFields()).map(field -> "public " + processType(field.getName(), field.getType()).getSimpleName() + " get" + field.getName().substring(0, 1).toUpperCase(Locale.ROOT) + field.getName().substring(1) + "(){return " + field.getName() + ";}").collect(Collectors.joining("\n")));
+            builder.append(Arrays.stream(Element.class.getDeclaredFields()).map(field -> processAnnotations(field) + "public " + processType(field).getSimpleName() + " get" + field.getName().substring(0, 1).toUpperCase(Locale.ROOT) + field.getName().substring(1) + "(){return " + field.getName() + ";}").collect(Collectors.joining("\n")));
         }
 
-        private static Class<?> processType(String fieldName, Class<?> clazz)
+        private static String processAnnotations(Field field)
         {
-            return "name".equals(fieldName) ? ITextComponent.class : clazz;
+            return Arrays.stream(field.getAnnotations()).map(annotation -> "@" + annotation.annotationType().getSimpleName()).collect(Collectors.joining(" ")) + (field.getAnnotations().length > 0 ? " " : "");
+        }
+
+        private static Class<?> processType(Field field)
+        {
+            return "name".equals(field.getName()) ? ITextComponent.class : field.getType();
         }
 
         @Override
@@ -254,11 +273,11 @@ public class PeriodicTableGenerator
                 String standardState = context.deserialize(json.get("standardState"), String.class);
                 String symbol = context.deserialize(json.get("symbol"), String.class);
                 int vanDelWaalsRadius = getOptionalInt(json, "vanDelWaalsRadius", context);
-                int yearDiscovered = context.deserialize(json.get("atomicNumber"), int.class);
+                int yearDiscovered = getYear(json, context);
                 // Hack for Fluorine which is not a hex for some reason
                 if ("9e+51".equals(cpkHexColor))
                     cpkHexColor = "90e050";
-                return new Element(atomicMass, atomicNumber, atomicRadius, boilingPoint, bondingType, cpkHexColor.isEmpty() ? -1 : Integer.parseUnsignedInt(cpkHexColor, 16), density, electronAffinity, electronegativity, electronicConfiguration, groupBlock, ionRadius, ionizationEnergy, meltingPoint, name, oxidationStates, standardState, symbol, vanDelWaalsRadius, yearDiscovered);
+                return new Element(getAtomicMass(atomicMass), atomicNumber, atomicRadius, boilingPoint, bondingType, cpkHexColor.isEmpty() ? -1 : Integer.parseUnsignedInt(cpkHexColor, 16), density, electronAffinity, electronegativity, electronicConfiguration, PeriodicTableSection.byName(groupBlock), ionRadius, ionizationEnergy, meltingPoint, name, oxidationStates, standardState.isEmpty() ? null : ChemistryElementState.byName(standardState), symbol, vanDelWaalsRadius, yearDiscovered);
             }
 
             private static int getOptionalInt(JsonObject json, String name, JsonDeserializationContext context)
@@ -266,6 +285,14 @@ public class PeriodicTableGenerator
                 JsonElement element = json.get(name);
                 if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString())
                     return Integer.MIN_VALUE;
+                return context.deserialize(element, int.class);
+            }
+
+            private static int getYear(JsonObject json, JsonDeserializationContext context)
+            {
+                JsonElement element = json.get("yearDiscovered");
+                if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString())
+                    return -1;
                 return context.deserialize(element, int.class);
             }
 

@@ -1,4 +1,10 @@
-package io.github.ocelot.refinedchemistry.common;
+package io.github.ocelot.refinedchemistry.common.element;
+
+import io.github.ocelot.refinedchemistry.RefinedChemistry;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+
+import javax.annotation.Nullable;
 
 /**
  * <p>Specifies all elements on the Periodic Table.</p>
