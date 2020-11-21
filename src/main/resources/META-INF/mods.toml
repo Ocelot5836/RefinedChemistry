@@ -1,7 +1,7 @@
 modLoader="javafml" #mandatory
 loaderVersion="[34,)"
 license="https://www.gnu.org/licenses/gpl-3.0.en.html"
-# issueTrackerURL="http://my.issue.tracker/" #optional
+issueTrackerURL="https://github.com/Ocelot5836/RefinedChemistry/issues" #optional
 
 [[mods]] #mandatory
 modId = "${modId}" #mandatory
