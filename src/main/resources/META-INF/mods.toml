@@ -1,0 +1,31 @@
+modLoader="javafml" #mandatory
+loaderVersion="[34,)"
+license="https://www.gnu.org/licenses/gpl-3.0.en.html"
+# issueTrackerURL="http://my.issue.tracker/" #optional
+
+[[mods]] #mandatory
+modId = "${modId}" #mandatory
+version = "${modVersion}" #mandatory
+displayName = "${modName}" #mandatory
+# updateJSONURL="http://myurl.me/" #optional
+# displayURL="http://example.com/" #optional
+# logoFile="examplemod.png" #optional
+# credits="Thanks for this example mod goes to Java" #optional
+authors="Ocelot" #optional
+description='''
+Adds more intuitive Chemistry into Minecraft.
+'''
+
+[[dependencies.${modId}]]
+modId = "forge"
+mandatory = true
+versionRange = "[34,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${modId}]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.16.3]"
+ordering = "NONE"
+side = "BOTH"
