@@ -7,6 +7,11 @@ import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.Locale;
 
+/**
+ * <p>A section on the Periodic table.</p>
+ *
+ * @author Ocelot
+ */
 public enum PeriodicTableSection
 {
     NONMETAL,

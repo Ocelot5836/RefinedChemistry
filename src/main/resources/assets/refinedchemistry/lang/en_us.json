@@ -1,6 +1,22 @@
 {
   "itemGroup.refinedchemistry": "Refined Chemistry",
 
+  "state.refinedchemistry.solid": "Solid",
+  "state.refinedchemistry.liquid": "Liquid",
+  "state.refinedchemistry.gas": "Gas",
+
+  "section.refinedchemistry.nonmetal": "Gas",
+  "section.refinedchemistry.alkali_metal": "Alkali Metal",
+  "section.refinedchemistry.alkaline_earth_metal": "Alkaline Earth Metal",
+  "section.refinedchemistry.lanthanoid": "Lanthanoid",
+  "section.refinedchemistry.actinoid": "Actinoid",
+  "section.refinedchemistry.transition_metal": "Transition Metal",
+  "section.refinedchemistry.post_transition_metal": "Post-transition Metal",
+  "section.refinedchemistry.metal": "Metal",
+  "section.refinedchemistry.metalloid": "Metalloid",
+  "section.refinedchemistry.halogen": "Halogen",
+  "section.refinedchemistry.noble_gas": "Noble Gas",
+
   "element.refinedchemistry.hydrogen": "Hydrogen",
   "element.refinedchemistry.helium": "Helium",
   "element.refinedchemistry.lithium": "Lithium",
