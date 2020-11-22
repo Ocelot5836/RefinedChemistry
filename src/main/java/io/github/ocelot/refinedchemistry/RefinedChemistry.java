@@ -1,9 +1,6 @@
 package io.github.ocelot.refinedchemistry;
 
-import io.github.ocelot.refinedchemistry.common.registry.ChemistryBlocks;
-import io.github.ocelot.refinedchemistry.common.registry.ChemistryEntities;
-import io.github.ocelot.refinedchemistry.common.registry.ChemistryItems;
-import io.github.ocelot.refinedchemistry.common.registry.ChemistrySounds;
+import io.github.ocelot.refinedchemistry.common.registry.*;
 import io.github.ocelot.refinedchemistry.datagen.*;
 import io.github.ocelot.sonar.Sonar;
 import io.github.ocelot.sonar.common.util.SortedItemGroup;
@@ -52,6 +49,7 @@ public class RefinedChemistry
 
     private void setup(FMLCommonSetupEvent event)
     {
+        ElementCapability.init();
     }
 
     private void clientSetup(FMLClientSetupEvent event)

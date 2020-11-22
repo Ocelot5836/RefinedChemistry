@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
  *
  * @author Ocelot
  */
-public enum ChemistryElements
+public enum ChemistryElement
 {
     HYDROGEN(1.00794, 1, 37, 20, "diatomic", 0xffffff, 8.99E-5, -73, 2.2, "1s1", PeriodicTableSection.NONMETAL, "", 1312, 14, new TranslationTextComponent("element." + RefinedChemistry.MOD_ID + ".hydrogen"), "-1, 1", ChemistryElementState.GAS, "H", 120, 1766),
     HELIUM(4.002602, 2, 32, 4, "atomic", 0xd9ffff, 1.785E-4, 0, 4.9E-324, "1s2", PeriodicTableSection.NOBLE_GAS, "", 2372, -2147483648, new TranslationTextComponent("element." + RefinedChemistry.MOD_ID + ".helium"), "", ChemistryElementState.GAS, "He", 140, 1868),
@@ -153,7 +153,7 @@ public enum ChemistryElements
     private final int vanDelWaalsRadius;
     private final int yearDiscovered;
 
-    ChemistryElements(double atomicMass, int atomicNumber, int atomicRadius, int boilingPoint, String bondingType, int cpkColor, double density, int electronAffinity, double electronegativity, String electronicConfiguration, PeriodicTableSection groupBlock, String ionRadius, int ionizationEnergy, int meltingPoint, ITextComponent name, String oxidationStates, @Nullable ChemistryElementState standardState, String symbol, int vanDelWaalsRadius, int yearDiscovered)
+    ChemistryElement(double atomicMass, int atomicNumber, int atomicRadius, int boilingPoint, String bondingType, int cpkColor, double density, int electronAffinity, double electronegativity, String electronicConfiguration, PeriodicTableSection groupBlock, String ionRadius, int ionizationEnergy, int meltingPoint, ITextComponent name, String oxidationStates, @Nullable ChemistryElementState standardState, String symbol, int vanDelWaalsRadius, int yearDiscovered)
     {
         this.atomicMass = atomicMass;
         this.atomicNumber = atomicNumber;
@@ -276,5 +276,14 @@ public enum ChemistryElements
     public int getYearDiscovered()
     {
         return yearDiscovered;
+    }
+
+    @Nullable
+    public static ChemistryElement byName(String name)
+    {
+        for (ChemistryElement element : values())
+            if (element.name().equalsIgnoreCase(name))
+                return element;
+        return null;
     }
 }
