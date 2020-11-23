@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "refinedchemistry:item/small_element_bottle",
+    "layer1": "refinedchemistry:item/small_element_bottle_solid_overlay"
+  }
+}

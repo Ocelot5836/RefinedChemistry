@@ -1,9 +1,11 @@
 package io.github.ocelot.refinedchemistry.common.element;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.util.Constants;
 
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * <p>A quantity of a single element.</p>
@@ -16,11 +18,20 @@ public class ElementStack
 
     private final ChemistryElement element;
     private int count;
+    private ChemistryElementState state;
 
     public ElementStack(CompoundNBT nbt)
     {
         this.element = nbt.contains("Element", Constants.NBT.TAG_STRING) ? ChemistryElement.byName(nbt.getString("Element")) : null;
         this.count = nbt.getShort("Count");
+        this.state = ChemistryElementState.byName("State");
+    }
+
+    public ElementStack(PacketBuffer buf)
+    {
+        this.element = buf.readBoolean() ? buf.readEnumValue(ChemistryElement.class) : null;
+        this.count = buf.readShort();
+        this.state = buf.readEnumValue(ChemistryElementState.class);
     }
 
     public ElementStack(ChemistryElement element)
@@ -32,6 +43,7 @@ public class ElementStack
     {
         this.element = element;
         this.count = count;
+        this.state = ChemistryElementState.SOLID;
     }
 
     /**
@@ -44,7 +56,22 @@ public class ElementStack
         if (this.element != null)
             nbt.putString("Element", this.element.name().toLowerCase(Locale.ROOT));
         nbt.putShort("Count", (short) this.count);
+        nbt.putString("State", this.state.name().toLowerCase(Locale.ROOT));
         return nbt;
+    }
+
+    /**
+     * Writes the data from this stack into the provided buffer.
+     *
+     * @param buf The buffer to write data into
+     */
+    public void write(PacketBuffer buf)
+    {
+        buf.writeBoolean(this.element != null);
+        if (this.element != null)
+            buf.writeEnumValue(this.element);
+        buf.writeShort(this.count);
+        buf.writeEnumValue(this.state);
     }
 
     /**
@@ -115,6 +142,14 @@ public class ElementStack
     }
 
     /**
+     * @return The state this element is in
+     */
+    public ChemistryElementState getState()
+    {
+        return state;
+    }
+
+    /**
      * Sets the amount of element in this stack in milli-buckets
      *
      * @param count The new amount
@@ -122,5 +157,36 @@ public class ElementStack
     public void setCount(int count)
     {
         this.count = count;
+    }
+
+    /**
+     * Sets the state of this element
+     *
+     * @param state The new state of this element
+     */
+    public void setState(ChemistryElementState state)
+    {
+        this.state = state;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ElementStack stack = (ElementStack) o;
+        return (this.isEmpty() && stack.isEmpty()) || count == stack.count && element == stack.element;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return this.isEmpty() ? Objects.hash(EMPTY.element, EMPTY.count) : Objects.hash(element, count);
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.isEmpty() ? "Empty Element Stack" : this.count + " " + this.element.getName().getString() + " " + this.state.getName().getString();
     }
 }

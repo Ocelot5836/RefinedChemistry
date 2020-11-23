@@ -1,6 +1,15 @@
 {
   "itemGroup.refinedchemistry": "Refined Chemistry",
 
+  "item.refinedchemistry.small_element_bottle": "Small Element Bottle",
+  "item.refinedchemistry.small_element_bottle.tooltip": "%s %s",
+  "item.refinedchemistry.large_element_bottle": "Large Element Bottle",
+  "item.refinedchemistry.large_element_bottle.tooltip": "%s %s",
+  "item.refinedchemistry.small_element_test_tube": "Small Element Test Tube",
+  "item.refinedchemistry.small_element_test_tube.tooltip": "%s %s",
+  "item.refinedchemistry.large_element_test_tube": "Large Element Test Tube",
+  "item.refinedchemistry.large_element_test_tube.tooltip": "%s %s",
+
   "state.refinedchemistry.solid": "Solid",
   "state.refinedchemistry.liquid": "Liquid",
   "state.refinedchemistry.gas": "Gas",

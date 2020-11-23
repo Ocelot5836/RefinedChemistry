@@ -7,6 +7,9 @@ import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.tags.*;
 
+/**
+ * @author Ocelot
+ */
 public class ChemistryTags
 {
 //    public static final ITag.INamedTag<Item> EXAMPLE = makeItemWrapperTag("example");

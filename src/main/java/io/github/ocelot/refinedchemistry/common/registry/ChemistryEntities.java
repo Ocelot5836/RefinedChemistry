@@ -13,6 +13,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
+/**
+ * @author Ocelot
+ */
 @Mod.EventBusSubscriber(modid = RefinedChemistry.MOD_ID)
 public class ChemistryEntities
 {

@@ -13,6 +13,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * @author Ocelot
+ */
 public class ChemistryBlocks
 {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, RefinedChemistry.MOD_ID);

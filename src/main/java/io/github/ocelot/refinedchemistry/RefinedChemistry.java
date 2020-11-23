@@ -1,17 +1,18 @@
 package io.github.ocelot.refinedchemistry;
 
+import io.github.ocelot.refinedchemistry.client.RefinedChemistryClientRegistry;
 import io.github.ocelot.refinedchemistry.common.registry.*;
 import io.github.ocelot.refinedchemistry.datagen.*;
 import io.github.ocelot.sonar.Sonar;
 import io.github.ocelot.sonar.common.util.SortedItemGroup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -26,7 +27,7 @@ public class RefinedChemistry
         @Override
         public ItemStack createIcon()
         {
-            return new ItemStack(Items.DIAMOND);
+            return new ItemStack(ChemistryItems.SMALL_ELEMENT_BOTTLE.get());
         }
     };
 
@@ -35,7 +36,11 @@ public class RefinedChemistry
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         Sonar.init(bus);
         bus.addListener(this::setup);
-        bus.addListener(this::clientSetup);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+        {
+            RefinedChemistryClientRegistry.init(bus);
+            bus.addListener(RefinedChemistryClientRegistry::setup);
+        });
         bus.addListener(this::dataSetup);
 
         ChemistryItems.ITEMS.register(bus);
@@ -49,11 +54,8 @@ public class RefinedChemistry
 
     private void setup(FMLCommonSetupEvent event)
     {
+        ChemistryMessages.init();
         ElementCapability.init();
-    }
-
-    private void clientSetup(FMLClientSetupEvent event)
-    {
     }
 
     private void dataSetup(GatherDataEvent event)

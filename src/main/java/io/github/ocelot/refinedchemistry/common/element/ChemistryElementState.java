@@ -1,6 +1,5 @@
 package io.github.ocelot.refinedchemistry.common.element;
 
-import com.google.gson.JsonSyntaxException;
 import io.github.ocelot.refinedchemistry.RefinedChemistry;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -18,16 +17,16 @@ public enum ChemistryElementState
     LIQUID,
     GAS;
 
-    private final ITextComponent displayName;
+    private final ITextComponent name;
 
     ChemistryElementState()
     {
-        this.displayName = new TranslationTextComponent("state." + RefinedChemistry.MOD_ID + "." + this.name().toLowerCase(Locale.ROOT));
+        this.name = new TranslationTextComponent("state." + RefinedChemistry.MOD_ID + "." + this.name().toLowerCase(Locale.ROOT));
     }
 
-    public ITextComponent getDisplayName()
+    public ITextComponent getName()
     {
-        return displayName;
+        return name;
     }
 
     public static ChemistryElementState byName(String name)
@@ -35,6 +34,6 @@ public enum ChemistryElementState
         for (ChemistryElementState section : values())
             if (section.name().equalsIgnoreCase(name))
                 return section;
-        throw new JsonSyntaxException("Unknown state: " + name);
+        return SOLID;
     }
 }

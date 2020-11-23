@@ -15,7 +15,7 @@ public class SimpleElementContainer implements ElementContainer
 {
     private final Map<ChemistryElement, ElementStack> elements;
     private final int capacity;
-    private int count;
+    private final Cache cache;
 
     public SimpleElementContainer()
     {
@@ -27,7 +27,7 @@ public class SimpleElementContainer implements ElementContainer
         this.elements = new HashMap<>();
         Validate.isTrue(capacity >= 0, "Capacity can not be less than zero");
         this.capacity = capacity;
-        this.count = 0;
+        this.cache = new Cache();
     }
 
     @Override
@@ -39,19 +39,22 @@ public class SimpleElementContainer implements ElementContainer
     @Override
     public ElementStack insertElement(ElementStack stack)
     {
-        if (stack.isEmpty() || this.capacity == 0)
+        if (stack.isEmpty() || this.capacity == 0 || this.cache.count == this.capacity)
             return stack;
-        ElementStack internalStack = this.elements.computeIfAbsent(stack.getElement(), ElementStack::new);
-        if (this.count + stack.getCount() > this.capacity)
+        System.out.println("Inserting " + stack);
+        ElementStack internalStack = this.elements.computeIfAbsent(stack.getElement(), key -> new ElementStack(key, 0));
+        if (this.cache.count + stack.getCount() > this.capacity)
         {
             ElementStack copy = stack.copy();
-            internalStack.setCount(this.capacity - this.count);
-            copy.shrink(this.capacity - this.count);
-            this.count += copy.getCount();
+            internalStack.setCount(this.capacity - this.cache.count);
+            copy.shrink(this.capacity - this.cache.count);
+            this.cache.count += this.capacity - this.cache.count;
+            this.cache.calculateColor();
             return copy;
         }
         internalStack.setCount(internalStack.getCount() + stack.getCount());
-        this.count += stack.getCount();
+        this.cache.count += stack.getCount();
+        this.cache.calculateColor();
         return ElementStack.EMPTY;
     }
 
@@ -64,6 +67,8 @@ public class SimpleElementContainer implements ElementContainer
         ElementStack removed = internalStack.split(count);
         if (internalStack.isEmpty())
             this.elements.remove(element);
+        this.cache.count -= removed.getCount();
+        this.cache.calculateColor();
         return removed;
     }
 
@@ -82,19 +87,59 @@ public class SimpleElementContainer implements ElementContainer
         }
         else
         {
-            this.elements.put(stack.getElement(), stack);
+            this.elements.put(stack.getElement(), stack.copy());
+            this.cache.count += stack.getCount();
+            this.cache.calculateColor();
         }
-    }
-
-    @Override
-    public int getCount()
-    {
-        return count;
     }
 
     @Override
     public int getCapacity()
     {
         return capacity;
+    }
+
+    @Override
+    public int getCount()
+    {
+        return this.cache.count;
+    }
+
+    @Override
+    public int getAverageColor()
+    {
+        return this.cache.averageColor;
+    }
+
+    @Override
+    public void clear()
+    {
+        this.elements.clear();
+        this.cache.count = 0;
+        this.cache.averageColor = 0xffffff;
+    }
+
+    private class Cache
+    {
+        private int count;
+        private int averageColor;
+
+        private void calculateColor()
+        {
+            if (SimpleElementContainer.this.getElements().isEmpty())
+            {
+                this.averageColor = 0xffffff;
+                return;
+            }
+
+            int newColor = 0;
+            for (ElementStack stack : SimpleElementContainer.this.getElements())
+            {
+                int elementColor = stack.getElement().getCpkColor();
+                float percentage = (float) stack.getCount() / (float) this.count;
+                newColor += (int) (((elementColor >> 16) & 0xff) * percentage) << 16 | (int) (((elementColor >> 8) & 0xff) * percentage) << 8 | (int) ((elementColor & 0xff) * percentage);
+            }
+            this.averageColor = newColor;
+        }
     }
 }

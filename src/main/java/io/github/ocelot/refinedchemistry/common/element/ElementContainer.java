@@ -1,13 +1,16 @@
 package io.github.ocelot.refinedchemistry.common.element;
 
+import net.minecraft.inventory.IClearable;
+
 import java.util.Collection;
+import java.util.function.Predicate;
 
 /**
- * <p>Allows a player to become incredibly strong at will.</p>
+ * <p>Enables something to contain a specified amount of {@link ElementStack}.</p>
  *
  * @author Ocelot
  */
-public interface ElementContainer
+public interface ElementContainer extends IClearable
 {
     /**
      * @return The elements in this container
@@ -47,12 +50,40 @@ public interface ElementContainer
     void setElement(ElementStack stack);
 
     /**
+     * @return The total capacity of this container
+     */
+    int getCapacity();
+
+    /**
      * @return The total count of all elements in this container
      */
     int getCount();
 
     /**
-     * @return The total capacity of this container
+     * @return The color of the content in this container
      */
-    int getCapacity();
+    int getAverageColor();
+
+    /**
+     * Calculates the total percentage of the specified element is in this container.
+     *
+     * @param predicate  The filter to use when calculating percentage
+     * @param cumulative Whether to calculate percentage based on the capacity of this container
+     * @return The percentage of elements that fit the provided filter
+     */
+    default float calculateFillPercentage(Predicate<ElementStack> predicate, boolean cumulative)
+    {
+        if (this.getElements().isEmpty())
+            return 0;
+
+        int total = 0;
+        int current = 0;
+        for (ElementStack stack : this.getElements())
+        {
+            total += stack.getCount();
+            if (predicate.test(stack))
+                current++;
+        }
+        return cumulative ? (float) current / (float) Math.min(total, this.getCapacity()) : (float) current / (float) total;
+    }
 }
