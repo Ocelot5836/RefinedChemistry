@@ -1,9 +1,6 @@
 package io.github.ocelot.refinedchemistry.common.item;
 
-import io.github.ocelot.refinedchemistry.common.element.ChemistryElement;
-import io.github.ocelot.refinedchemistry.common.element.ElementContainer;
-import io.github.ocelot.refinedchemistry.common.element.ElementStack;
-import io.github.ocelot.refinedchemistry.common.element.SimpleElementContainer;
+import io.github.ocelot.refinedchemistry.common.element.*;
 import io.github.ocelot.refinedchemistry.common.network.play.SSyncElementContainer;
 import io.github.ocelot.refinedchemistry.common.registry.ChemistryMessages;
 import io.github.ocelot.refinedchemistry.common.registry.ElementCapability;
@@ -16,10 +13,9 @@ import net.minecraft.nbt.INBT;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
-import net.minecraft.util.text.Color;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -51,7 +47,7 @@ public class ElementVialItem extends Item
         ItemStack stack = player.getHeldItem(hand);
         if (!world.isRemote())
         {
-            stack.getCapability(ElementCapability.ELEMENT_CONTAINER_CAPABILITY).ifPresent(container -> container.insertElement(new ElementStack(ChemistryElement.values()[(int) Math.abs(player.getPosX())], 10)));
+            stack.getCapability(ElementCapability.ELEMENT_CONTAINER_CAPABILITY).ifPresent(container -> container.insertMolecule(new ChemistryMolecule(new ChemistryAtom(ChemistryElement.values()[(int) Math.abs(player.getPosX()) % ChemistryElement.values().length], 10), new ChemistryAtom(ChemistryElement.values()[(int) Math.abs(player.getPosX() * 2) % ChemistryElement.values().length], 3))));
             ChemistryMessages.PLAY.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), new SSyncElementContainer(player, hand));
         }
         return ActionResult.func_233538_a_(stack, world.isRemote());
@@ -60,7 +56,7 @@ public class ElementVialItem extends Item
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag)
     {
-        stack.getCapability(ElementCapability.ELEMENT_CONTAINER_CAPABILITY).ifPresent(container -> container.getElements().forEach(elementStack -> tooltip.add(new TranslationTextComponent(this.getTranslationKey() + ".tooltip", elementStack.getCount(), elementStack.getElement().getName()).mergeStyle(Style.EMPTY.setColor(Color.fromInt(elementStack.getElement().getCpkColor()))))));
+        stack.getCapability(ElementCapability.ELEMENT_CONTAINER_CAPABILITY).ifPresent(container -> container.getMolecules().forEach(molecule -> tooltip.add(new StringTextComponent(molecule.getCount() + " ").mergeStyle(TextFormatting.GRAY).append(molecule.getName()))));
     }
 
     @Nullable

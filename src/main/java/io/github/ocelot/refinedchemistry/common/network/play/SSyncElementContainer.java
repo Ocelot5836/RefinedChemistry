@@ -1,7 +1,7 @@
 package io.github.ocelot.refinedchemistry.common.network.play;
 
+import io.github.ocelot.refinedchemistry.common.element.ChemistryMolecule;
 import io.github.ocelot.refinedchemistry.common.element.ElementContainer;
-import io.github.ocelot.refinedchemistry.common.element.ElementStack;
 import io.github.ocelot.refinedchemistry.common.network.play.handler.IChemistryClientPlayHandler;
 import io.github.ocelot.refinedchemistry.common.registry.ElementCapability;
 import io.github.ocelot.sonar.common.network.message.SonarMessage;
@@ -20,7 +20,7 @@ import java.util.UUID;
  */
 public class SSyncElementContainer implements SonarMessage<IChemistryClientPlayHandler>
 {
-    private ElementStack[] elements;
+    private ChemistryMolecule[] molecules;
     private UUID player;
     private Hand hand;
 
@@ -31,7 +31,7 @@ public class SSyncElementContainer implements SonarMessage<IChemistryClientPlayH
     public SSyncElementContainer(PlayerEntity player, Hand hand)
     {
         LazyOptional<ElementContainer> lazyOptional = player.getHeldItem(hand).getCapability(ElementCapability.ELEMENT_CONTAINER_CAPABILITY);
-        this.elements = lazyOptional.isPresent() ? lazyOptional.orElseThrow(IllegalStateException::new).getElements().toArray(new ElementStack[0]) : new ElementStack[0];
+        this.molecules = lazyOptional.isPresent() ? lazyOptional.orElseThrow(IllegalStateException::new).getMolecules().toArray(new ChemistryMolecule[0]) : new ChemistryMolecule[0];
         this.player = player.getUniqueID();
         this.hand = hand;
     }
@@ -39,9 +39,9 @@ public class SSyncElementContainer implements SonarMessage<IChemistryClientPlayH
     @Override
     public void readPacketData(PacketBuffer buf)
     {
-        this.elements = new ElementStack[buf.readVarInt()];
-        for (int i = 0; i < this.elements.length; i++)
-            this.elements[i] = new ElementStack(buf);
+        this.molecules = new ChemistryMolecule[buf.readVarInt()];
+        for (int i = 0; i < this.molecules.length; i++)
+            this.molecules[i] = new ChemistryMolecule(buf);
         this.player = buf.readUniqueId();
         this.hand = buf.readEnumValue(Hand.class);
     }
@@ -49,9 +49,9 @@ public class SSyncElementContainer implements SonarMessage<IChemistryClientPlayH
     @Override
     public void writePacketData(PacketBuffer buf)
     {
-        buf.writeVarInt(this.elements.length);
-        for (ElementStack stack : this.elements)
-            stack.write(buf);
+        buf.writeVarInt(this.molecules.length);
+        for (ChemistryMolecule molecule : this.molecules)
+            molecule.write(buf);
         buf.writeUniqueId(this.player);
         buf.writeEnumValue(this.hand);
     }
@@ -63,12 +63,12 @@ public class SSyncElementContainer implements SonarMessage<IChemistryClientPlayH
     }
 
     /**
-     * @return The elements in the stack
+     * @return The molecules in the stack
      */
     @OnlyIn(Dist.CLIENT)
-    public ElementStack[] getElements()
+    public ChemistryMolecule[] getMolecules()
     {
-        return elements;
+        return molecules;
     }
 
     /**
@@ -81,7 +81,7 @@ public class SSyncElementContainer implements SonarMessage<IChemistryClientPlayH
     }
 
     /**
-     * @return The hand the player is holding the element in
+     * @return The hand the player is holding the container in
      */
     @OnlyIn(Dist.CLIENT)
     public Hand getHand()

@@ -2,9 +2,10 @@ package io.github.ocelot.refinedchemistry.common.element;
 
 import org.apache.commons.lang3.Validate;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * <p>A basic implementation of {@link ElementContainer}.</p>
@@ -13,7 +14,8 @@ import java.util.Map;
  */
 public class SimpleElementContainer implements ElementContainer
 {
-    private final Map<ChemistryElement, ElementStack> elements;
+    private static final Comparator<ChemistryMolecule> COMPARATOR = (o1, o2) -> o2.getCount() - o1.getCount();
+    private final List<ChemistryMolecule> molecules;
     private final int capacity;
     private final Cache cache;
 
@@ -24,73 +26,87 @@ public class SimpleElementContainer implements ElementContainer
 
     public SimpleElementContainer(int capacity)
     {
-        this.elements = new HashMap<>();
         Validate.isTrue(capacity >= 0, "Capacity can not be less than zero");
+        this.molecules = new LinkedList<>();
         this.capacity = capacity;
         this.cache = new Cache();
     }
 
-    @Override
-    public Collection<ElementStack> getElements()
+    /**
+     * Finds an existing molecule of the same composition or creates a new empty one.
+     *
+     * @param atoms The atoms to search for in a molecule
+     * @return A pre-existing molecule of provided composition or a new, empty molecule
+     */
+    private ChemistryMolecule findMatching(ChemistryAtom... atoms)
     {
-        return this.elements.values();
+        for (ChemistryMolecule internalMolecule : this.molecules)
+            if (Arrays.equals(internalMolecule.getAtoms(), atoms))
+                return internalMolecule;
+        return new ChemistryMolecule(0, atoms);
     }
 
     @Override
-    public ElementStack insertElement(ElementStack stack)
+    public List<ChemistryMolecule> getMolecules()
     {
-        if (stack.isEmpty() || this.capacity == 0 || this.cache.count == this.capacity)
-            return stack;
-        System.out.println("Inserting " + stack);
-        ElementStack internalStack = this.elements.computeIfAbsent(stack.getElement(), key -> new ElementStack(key, 0));
-        if (this.cache.count + stack.getCount() > this.capacity)
+        return this.molecules;
+    }
+
+    @Override
+    public ChemistryMolecule insertMolecule(ChemistryMolecule molecule)
+    {
+        if (molecule.isEmpty() || this.capacity == 0 || this.cache.count == this.capacity)
+            return molecule;
+        System.out.println("Inserting " + molecule);
+
+        ChemistryMolecule internalMolecule = this.findMatching(molecule.getAtoms());
+        if (internalMolecule.isEmpty())
+            this.molecules.add(internalMolecule);
+        if (this.cache.count + molecule.getCount() > this.capacity)
         {
-            ElementStack copy = stack.copy();
-            internalStack.setCount(this.capacity - this.cache.count);
+            ChemistryMolecule copy = molecule.copy();
+            internalMolecule.setCount(this.capacity - this.cache.count);
             copy.shrink(this.capacity - this.cache.count);
             this.cache.count += this.capacity - this.cache.count;
-            this.cache.calculateColor();
+            this.cache.recalculateColor();
+            this.molecules.sort(COMPARATOR);
             return copy;
         }
-        internalStack.setCount(internalStack.getCount() + stack.getCount());
-        this.cache.count += stack.getCount();
-        this.cache.calculateColor();
-        return ElementStack.EMPTY;
+
+        internalMolecule.setCount(internalMolecule.getCount() + molecule.getCount());
+        this.cache.count += molecule.getCount();
+        this.cache.recalculateColor();
+        this.molecules.sort(COMPARATOR);
+        return ChemistryMolecule.EMPTY;
     }
 
     @Override
-    public ElementStack removeElement(ChemistryElement element, int count)
+    public ChemistryMolecule removeMolecule(int count, ChemistryAtom... atoms)
     {
-        if (!this.elements.containsKey(element))
-            return ElementStack.EMPTY;
-        ElementStack internalStack = this.elements.get(element);
-        ElementStack removed = internalStack.split(count);
-        if (internalStack.isEmpty())
-            this.elements.remove(element);
+        ChemistryMolecule molecule = this.findMatching(atoms);
+        if (molecule.isEmpty())
+            return ChemistryMolecule.EMPTY;
+
+        ChemistryMolecule removed = molecule.split(count);
+        if (molecule.isEmpty())
+            this.molecules.remove(molecule);
         this.cache.count -= removed.getCount();
-        this.cache.calculateColor();
+        this.cache.recalculateColor();
+        this.molecules.sort(COMPARATOR);
         return removed;
     }
 
     @Override
-    public ElementStack getElement(ChemistryElement element)
+    public void setMolecules(ChemistryMolecule... molecules)
     {
-        return this.elements.getOrDefault(element, ElementStack.EMPTY);
-    }
-
-    @Override
-    public void setElement(ElementStack stack)
-    {
-        if (stack.isEmpty())
+        this.clear();
+        for (ChemistryMolecule molecule : molecules)
         {
-            this.elements.remove(stack.getElement());
+            this.molecules.add(molecule);
+            this.cache.count += molecule.getCount();
         }
-        else
-        {
-            this.elements.put(stack.getElement(), stack.copy());
-            this.cache.count += stack.getCount();
-            this.cache.calculateColor();
-        }
+        this.cache.recalculateColor();
+        this.molecules.sort(COMPARATOR);
     }
 
     @Override
@@ -114,7 +130,7 @@ public class SimpleElementContainer implements ElementContainer
     @Override
     public void clear()
     {
-        this.elements.clear();
+        this.molecules.clear();
         this.cache.count = 0;
         this.cache.averageColor = 0xffffff;
     }
@@ -124,22 +140,21 @@ public class SimpleElementContainer implements ElementContainer
         private int count;
         private int averageColor;
 
-        private void calculateColor()
+        private void recalculateColor()
         {
-            if (SimpleElementContainer.this.getElements().isEmpty())
+            if (SimpleElementContainer.this.getMolecules().isEmpty())
             {
                 this.averageColor = 0xffffff;
                 return;
             }
 
-            int newColor = 0;
-            for (ElementStack stack : SimpleElementContainer.this.getElements())
+            this.averageColor = 0;
+            for (ChemistryMolecule molecule : SimpleElementContainer.this.getMolecules())
             {
-                int elementColor = stack.getElement().getCpkColor();
-                float percentage = (float) stack.getCount() / (float) this.count;
-                newColor += (int) (((elementColor >> 16) & 0xff) * percentage) << 16 | (int) (((elementColor >> 8) & 0xff) * percentage) << 8 | (int) ((elementColor & 0xff) * percentage);
+                int moleculeColor = molecule.getColor();
+                float percentage = (float) molecule.getCount() / (float) this.count;
+                this.averageColor += (int) (((moleculeColor >> 16) & 0xff) * percentage) << 16 | (int) (((moleculeColor >> 8) & 0xff) * percentage) << 8 | (int) ((moleculeColor & 0xff) * percentage);
             }
-            this.averageColor = newColor;
         }
     }
 }

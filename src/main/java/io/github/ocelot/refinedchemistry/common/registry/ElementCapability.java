@@ -1,8 +1,8 @@
 package io.github.ocelot.refinedchemistry.common.registry;
 
 import io.github.ocelot.refinedchemistry.RefinedChemistry;
+import io.github.ocelot.refinedchemistry.common.element.ChemistryMolecule;
 import io.github.ocelot.refinedchemistry.common.element.ElementContainer;
-import io.github.ocelot.refinedchemistry.common.element.ElementStack;
 import io.github.ocelot.refinedchemistry.common.element.SimpleElementContainer;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
@@ -38,7 +38,7 @@ public class ElementCapability
         public INBT writeNBT(Capability<ElementContainer> capability, ElementContainer instance, Direction side)
         {
             ListNBT elementsNbt = new ListNBT();
-            instance.getElements().forEach(elementStack -> elementsNbt.add(elementStack.serializeNBT(new CompoundNBT())));
+            instance.getMolecules().forEach(molecule -> elementsNbt.add(molecule.serializeNBT(new CompoundNBT())));
             return elementsNbt;
         }
 
@@ -48,10 +48,10 @@ public class ElementCapability
             if (nbt instanceof ListNBT)
             {
                 ListNBT elementsNbt = (ListNBT) nbt;
+                ChemistryMolecule[] molecules = new ChemistryMolecule[elementsNbt.size()];
                 for (int i = 0; i < elementsNbt.size(); i++)
-                {
-                    instance.setElement(new ElementStack(elementsNbt.getCompound(i)));
-                }
+                    molecules[i] = new ChemistryMolecule(elementsNbt.getCompound(i));
+                instance.setMolecules(molecules);
             }
         }
     }

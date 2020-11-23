@@ -4,64 +4,58 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.util.Constants;
 
-import java.util.Locale;
 import java.util.Objects;
 
 /**
- * <p>A quantity of a single element.</p>
+ * <p>A quantity of a single atom.</p>
  *
  * @author Ocelot
  */
-public class ElementStack
+public class ChemistryAtom
 {
-    public static final ElementStack EMPTY = new ElementStack((ChemistryElement) null);
+    public static final ChemistryAtom EMPTY = new ChemistryAtom((ChemistryElement) null);
 
     private final ChemistryElement element;
     private int count;
-    private ChemistryElementState state;
 
-    public ElementStack(CompoundNBT nbt)
+    public ChemistryAtom(CompoundNBT nbt)
     {
-        this.element = nbt.contains("Element", Constants.NBT.TAG_STRING) ? ChemistryElement.byName(nbt.getString("Element")) : null;
+        this.element = nbt.contains("Element", Constants.NBT.TAG_ANY_NUMERIC) ? ChemistryElement.values()[nbt.getShort("Element") % ChemistryElement.values().length] : null;
         this.count = nbt.getShort("Count");
-        this.state = ChemistryElementState.byName("State");
     }
 
-    public ElementStack(PacketBuffer buf)
+    public ChemistryAtom(PacketBuffer buf)
     {
         this.element = buf.readBoolean() ? buf.readEnumValue(ChemistryElement.class) : null;
         this.count = buf.readShort();
-        this.state = buf.readEnumValue(ChemistryElementState.class);
     }
 
-    public ElementStack(ChemistryElement element)
+    public ChemistryAtom(ChemistryElement element)
     {
         this(element, 1);
     }
 
-    public ElementStack(ChemistryElement element, int count)
+    public ChemistryAtom(ChemistryElement element, int count)
     {
         this.element = element;
         this.count = count;
-        this.state = ChemistryElementState.SOLID;
     }
 
     /**
-     * Writes the data from this stack into the provided tag.
+     * Writes the data from this atom into the provided tag.
      *
      * @param nbt The tag to write data into
      */
     public CompoundNBT serializeNBT(CompoundNBT nbt)
     {
         if (this.element != null)
-            nbt.putString("Element", this.element.name().toLowerCase(Locale.ROOT));
+            nbt.putShort("Element", (short) this.element.ordinal());
         nbt.putShort("Count", (short) this.count);
-        nbt.putString("State", this.state.name().toLowerCase(Locale.ROOT));
         return nbt;
     }
 
     /**
-     * Writes the data from this stack into the provided buffer.
+     * Writes the data from this atom into the provided buffer.
      *
      * @param buf The buffer to write data into
      */
@@ -71,54 +65,57 @@ public class ElementStack
         if (this.element != null)
             buf.writeEnumValue(this.element);
         buf.writeShort(this.count);
-        buf.writeEnumValue(this.state);
     }
 
     /**
-     * Increases the count in this stack by the provided amount.
+     * Increases the count in this atom by the provided amount.
      *
      * @param count The amount to grow
      */
     public void grow(int count)
     {
+        if (this == EMPTY)
+            return;
         this.count += count;
     }
 
     /**
-     * Decreases the count in this stack by the provided amount.
+     * Decreases the count in this atom by the provided amount.
      *
      * @param count The amount to shrink
      */
     public void shrink(int count)
     {
+        if (this == EMPTY)
+            return;
         this.count -= count;
     }
 
     /**
-     * Attempts to split off the specified amount of this element.
+     * Attempts to split off the specified amount of this atom.
      *
      * @param count The amount to take off
-     * @return A new stack with the provided count or less
+     * @return A new atom with the provided count or less
      */
-    public ElementStack split(int count)
+    public ChemistryAtom split(int count)
     {
         int removeCount = Math.min(this.count, count);
-        ElementStack copy = this.copy();
+        ChemistryAtom copy = this.copy();
         copy.setCount(removeCount);
         this.count -= removeCount;
         return copy;
     }
 
     /**
-     * @return Constructs a copy of this stack
+     * @return Constructs a copy of this atom
      */
-    public ElementStack copy()
+    public ChemistryAtom copy()
     {
-        return this.isEmpty() ? EMPTY : new ElementStack(this.element, this.count);
+        return this.isEmpty() ? EMPTY : new ChemistryAtom(this.element, this.count);
     }
 
     /**
-     * @return Whether or not this element stack is empty
+     * @return Whether or not this atom is empty
      */
     public boolean isEmpty()
     {
@@ -126,7 +123,7 @@ public class ElementStack
     }
 
     /**
-     * @return The element represented in this stack
+     * @return The atom represented in this stack
      */
     public ChemistryElement getElement()
     {
@@ -134,7 +131,7 @@ public class ElementStack
     }
 
     /**
-     * @return The amount of this element stored in milli-buckets
+     * @return The amount of this atom stored in milli-buckets
      */
     public int getCount()
     {
@@ -142,31 +139,15 @@ public class ElementStack
     }
 
     /**
-     * @return The state this element is in
-     */
-    public ChemistryElementState getState()
-    {
-        return state;
-    }
-
-    /**
-     * Sets the amount of element in this stack in milli-buckets
+     * Sets the amount of atom in this stack in milli-buckets
      *
      * @param count The new amount
      */
     public void setCount(int count)
     {
+        if (this == EMPTY)
+            return;
         this.count = count;
-    }
-
-    /**
-     * Sets the state of this element
-     *
-     * @param state The new state of this element
-     */
-    public void setState(ChemistryElementState state)
-    {
-        this.state = state;
     }
 
     @Override
@@ -174,7 +155,7 @@ public class ElementStack
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ElementStack stack = (ElementStack) o;
+        ChemistryAtom stack = (ChemistryAtom) o;
         return (this.isEmpty() && stack.isEmpty()) || count == stack.count && element == stack.element;
     }
 
@@ -187,6 +168,6 @@ public class ElementStack
     @Override
     public String toString()
     {
-        return this.isEmpty() ? "Empty Element Stack" : this.count + " " + this.element.getName().getString() + " " + this.state.getName().getString();
+        return this.isEmpty() ? "Empty Atom" : this.count + " " + this.element.getName().getString() + " Atom(s)";
     }
 }
