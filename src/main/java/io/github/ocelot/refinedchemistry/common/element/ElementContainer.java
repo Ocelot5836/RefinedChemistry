@@ -2,7 +2,6 @@ package io.github.ocelot.refinedchemistry.common.element;
 
 import net.minecraft.inventory.IClearable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -30,10 +29,11 @@ public interface ElementContainer extends IClearable
      * Removes the specified amount of the specified molecule.
      *
      * @param count The amount of that molecule to remove
+     * @param state The state of matter to remove
      * @param atoms The atoms required in a molecule to remove
      * @return The molecule removed from this container
      */
-    ChemistryMolecule removeMolecule(int count, ChemistryAtom... atoms);
+    ChemistryMolecule removeMolecule(int count, ChemistryElementState state, ChemistryAtom... atoms);
 
     /**
      * Clears and sets the contents of this container to the provided molecules.
@@ -75,7 +75,7 @@ public interface ElementContainer extends IClearable
         {
             total += molecule.getCount();
             if (predicate.test(molecule))
-                current++;
+                current += molecule.getCount();
         }
         return cumulative ? (float) current / (float) Math.min(total, this.getCapacity()) : (float) current / (float) total;
     }

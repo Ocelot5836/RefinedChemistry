@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "refinedchemistry:item/large_element_bottle"
+  },
+  "overrides": [
+    { "predicate": { "refinedchemistry:element_state": 1 }, "model": "refinedchemistry:item/large_element_bottle_solid" },
+    { "predicate": { "refinedchemistry:element_state": 2 }, "model": "refinedchemistry:item/large_element_bottle_liquid" },
+    { "predicate": { "refinedchemistry:element_state": 3 }, "model": "refinedchemistry:item/large_element_bottle_gas" }
+  ]
+}

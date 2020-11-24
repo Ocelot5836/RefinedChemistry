@@ -1,6 +1,5 @@
 package io.github.ocelot.refinedchemistry.common.element;
 
-import io.github.ocelot.refinedchemistry.RefinedChemistry;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
@@ -24,7 +23,7 @@ public class ChemistryMolecule
     private int count;
     private ChemistryElementState state;
 
-    private final LazyValue<ITextComponent> name;
+    private LazyValue<ITextComponent> name;
     private final LazyValue<Integer> color;
 
     public ChemistryMolecule(CompoundNBT nbt)
@@ -37,7 +36,7 @@ public class ChemistryMolecule
         this.count = nbt.getShort("Count");
         this.state = ChemistryElementState.values()[nbt.getByte("State") % ChemistryElementState.values().length];
 
-        this.name = new LazyValue<>(() -> createName(this.atoms));
+        this.name = new LazyValue<>(() -> createName(this.state, this.atoms));
         this.color = new LazyValue<>(() -> createColor(this.atoms));
     }
 
@@ -50,7 +49,7 @@ public class ChemistryMolecule
         this.count = buf.readShort();
         this.state = buf.readEnumValue(ChemistryElementState.class);
 
-        this.name = new LazyValue<>(() -> createName(this.atoms));
+        this.name = new LazyValue<>(() -> createName(this.state, this.atoms));
         this.color = new LazyValue<>(() -> createColor(this.atoms));
     }
 
@@ -65,7 +64,7 @@ public class ChemistryMolecule
         this.count = count;
         this.state = ChemistryElementState.SOLID;
 
-        this.name = new LazyValue<>(() -> createName(this.atoms));
+        this.name = new LazyValue<>(() -> createName(this.state, this.atoms));
         this.color = new LazyValue<>(() -> createColor(this.atoms));
     }
 
@@ -104,11 +103,12 @@ public class ChemistryMolecule
      *
      * @param count The amount to grow
      */
-    public void grow(int count)
+    public ChemistryMolecule grow(int count)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.count += count;
+        return this;
     }
 
     /**
@@ -116,11 +116,12 @@ public class ChemistryMolecule
      *
      * @param count The amount to shrink
      */
-    public void shrink(int count)
+    public ChemistryMolecule shrink(int count)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.count -= count;
+        return this;
     }
 
     /**
@@ -199,11 +200,12 @@ public class ChemistryMolecule
      *
      * @param count The new amount
      */
-    public void setCount(int count)
+    public ChemistryMolecule setCount(int count)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.count = count;
+        return this;
     }
 
     /**
@@ -211,11 +213,13 @@ public class ChemistryMolecule
      *
      * @param state The new state of this compound
      */
-    public void setState(ChemistryElementState state)
+    public ChemistryMolecule setState(ChemistryElementState state)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.state = state;
+        this.name = new LazyValue<>(() -> createName(this.state, this.atoms));
+        return this;
     }
 
     @Override
@@ -237,7 +241,7 @@ public class ChemistryMolecule
     @Override
     public String toString()
     {
-        return this.isEmpty() ? "Empty Molecule" : this.count + " " + Arrays.stream(this.atoms).map(atom -> atom.getElement().getSymbol() + convertScript(Integer.toString(atom.getCount()), false)).collect(Collectors.joining()) + " Molecule(s)";
+        return this.isEmpty() ? "Empty Molecule" : this.count + " " + Arrays.stream(this.atoms).map(ChemistryAtom::getElementString).collect(Collectors.joining()) + " " + this.state.getName().getString();
     }
 
     private static ChemistryAtom[] mergeAtoms(ChemistryAtom[] atoms)
@@ -255,15 +259,12 @@ public class ChemistryMolecule
         return merged.values().stream().sorted(Comparator.comparing(atom -> atom.getElement().getSymbol())).toArray(ChemistryAtom[]::new);
     }
 
-    private static ITextComponent createName(ChemistryAtom[] atoms)
+    private static ITextComponent createName(ChemistryElementState state, ChemistryAtom[] atoms)
     {
         IFormattableTextComponent name = new StringTextComponent("");
         for (ChemistryAtom atom : atoms)
-        {
-            ChemistryElement element = atom.getElement();
-            name.append(new TranslationTextComponent("element." + RefinedChemistry.MOD_ID + ".tooltip", element.getSymbol(), convertScript(Integer.toString(atom.getCount()), false)).mergeStyle(Style.EMPTY.setColor(Color.fromInt(element.getCpkColor()))));
-        }
-        return name;
+            name.append(new StringTextComponent(atom.getElementString()).mergeStyle(Style.EMPTY.setColor(Color.fromInt(atom.getElement().getCpkColor()))));
+        return name.appendString(" ").append(state.getName());
     }
 
     private static int createColor(ChemistryAtom[] atoms)
@@ -277,49 +278,5 @@ public class ChemistryMolecule
             newColor += (int) (((elementColor >> 16) & 0xff) * percentage) << 16 | (int) (((elementColor >> 8) & 0xff) * percentage) << 8 | (int) ((elementColor & 0xff) * percentage);
         }
         return newColor;
-    }
-
-    private static CharSequence convertScript(CharSequence input, boolean superScript)
-    {
-        char[] result = new char[input.length()];
-        if (superScript)
-        {
-            for (int i = 0; i < input.length(); i++)
-            {
-                char character = input.charAt(i);
-
-                if (character == '0' || (character >= '4' && character <= '9'))
-                {
-                    result[i] = (char) (character + 0x2040);
-                    continue;
-                }
-                if (character == '1')
-                {
-                    result[i] = (char) 0x00B9;
-                    continue;
-                }
-                if (character >= '2' && character <= '3')
-                {
-                    result[i] = (char) (character + 0x0080);
-                    continue;
-                }
-
-                result[i] = character;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < input.length(); i++)
-            {
-                char character = input.charAt(i);
-                if (character >= '0' && character <= '9')
-                {
-                    result[i] = (char) (character + 0x2050);
-                    continue;
-                }
-                result[i] = character;
-            }
-        }
-        return new String(result);
     }
 }

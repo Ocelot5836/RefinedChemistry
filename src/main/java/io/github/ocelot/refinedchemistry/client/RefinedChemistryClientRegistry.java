@@ -41,8 +41,14 @@ public class RefinedChemistryClientRegistry
                 ChemistryElementState maxState = null;
                 float lastPercentage = 0;
                 for (ChemistryElementState state : ChemistryElementState.values())
-                    if (container.calculateFillPercentage(s -> s.getState() == state, false) > lastPercentage)
+                {
+                    float percentage = container.calculateFillPercentage(s -> s.getState() == state, false);
+                    if (percentage > lastPercentage)
+                    {
                         maxState = state;
+                        lastPercentage = percentage;
+                    }
+                }
                 return maxState == null ? 0 : maxState.ordinal() + 1;
             };
             ItemModelsProperties.registerProperty(ChemistryItems.SMALL_ELEMENT_BOTTLE.get(), new ResourceLocation(RefinedChemistry.MOD_ID, "element_state"), elementContainer);

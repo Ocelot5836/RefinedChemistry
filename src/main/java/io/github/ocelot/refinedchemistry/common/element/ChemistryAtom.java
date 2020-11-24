@@ -72,11 +72,12 @@ public class ChemistryAtom
      *
      * @param count The amount to grow
      */
-    public void grow(int count)
+    public ChemistryAtom grow(int count)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.count += count;
+        return this;
     }
 
     /**
@@ -84,11 +85,12 @@ public class ChemistryAtom
      *
      * @param count The amount to shrink
      */
-    public void shrink(int count)
+    public ChemistryAtom shrink(int count)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.count -= count;
+        return this;
     }
 
     /**
@@ -139,15 +141,26 @@ public class ChemistryAtom
     }
 
     /**
+     * @return The standard string representation of this atom
+     */
+    public String getElementString()
+    {
+        if (this.count == 1)
+            return this.element.getSymbol();
+        return this.element.getSymbol() + convertScript(Integer.toString(this.count), false);
+    }
+
+    /**
      * Sets the amount of atom in this stack in milli-buckets
      *
      * @param count The new amount
      */
-    public void setCount(int count)
+    public ChemistryAtom setCount(int count)
     {
         if (this == EMPTY)
-            return;
+            return this;
         this.count = count;
+        return this;
     }
 
     @Override
@@ -168,6 +181,50 @@ public class ChemistryAtom
     @Override
     public String toString()
     {
-        return this.isEmpty() ? "Empty Atom" : this.count + " " + this.element.getName().getString() + " Atom(s)";
+        return this.isEmpty() ? "Empty Atom" : this.getElementString() + " Atom(s)";
+    }
+
+    public static CharSequence convertScript(CharSequence input, boolean superScript)
+    {
+        char[] result = new char[input.length()];
+        if (superScript)
+        {
+            for (int i = 0; i < input.length(); i++)
+            {
+                char character = input.charAt(i);
+
+                if (character == '0' || (character >= '4' && character <= '9'))
+                {
+                    result[i] = (char) (character + 0x2040);
+                    continue;
+                }
+                if (character == '1')
+                {
+                    result[i] = (char) 0x00B9;
+                    continue;
+                }
+                if (character >= '2' && character <= '3')
+                {
+                    result[i] = (char) (character + 0x0080);
+                    continue;
+                }
+
+                result[i] = character;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < input.length(); i++)
+            {
+                char character = input.charAt(i);
+                if (character >= '0' && character <= '9')
+                {
+                    result[i] = (char) (character + 0x2050);
+                    continue;
+                }
+                result[i] = character;
+            }
+        }
+        return new String(result);
     }
 }

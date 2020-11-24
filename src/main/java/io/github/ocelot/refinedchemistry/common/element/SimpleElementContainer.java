@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class SimpleElementContainer implements ElementContainer
 {
-    private static final Comparator<ChemistryMolecule> COMPARATOR = (o1, o2) -> o2.getCount() - o1.getCount();
+    private static final Comparator<ChemistryMolecule> COMPARATOR = (o1, o2) -> ChemistryElementState.values().length * (o2.getCount() - o1.getCount()) + o2.getState().ordinal() - o1.getState().ordinal();
     private final List<ChemistryMolecule> molecules;
     private final int capacity;
     private final Cache cache;
@@ -35,15 +35,16 @@ public class SimpleElementContainer implements ElementContainer
     /**
      * Finds an existing molecule of the same composition or creates a new empty one.
      *
+     * @param state The state of matter the molecule should be in
      * @param atoms The atoms to search for in a molecule
      * @return A pre-existing molecule of provided composition or a new, empty molecule
      */
-    private ChemistryMolecule findMatching(ChemistryAtom... atoms)
+    private ChemistryMolecule findMatching(ChemistryElementState state, ChemistryAtom... atoms)
     {
         for (ChemistryMolecule internalMolecule : this.molecules)
-            if (Arrays.equals(internalMolecule.getAtoms(), atoms))
+            if (internalMolecule.getState() == state && Arrays.equals(internalMolecule.getAtoms(), atoms))
                 return internalMolecule;
-        return new ChemistryMolecule(0, atoms);
+        return new ChemistryMolecule(0, atoms).setState(state);
     }
 
     @Override
@@ -59,7 +60,7 @@ public class SimpleElementContainer implements ElementContainer
             return molecule;
         System.out.println("Inserting " + molecule);
 
-        ChemistryMolecule internalMolecule = this.findMatching(molecule.getAtoms());
+        ChemistryMolecule internalMolecule = this.findMatching(molecule.getState(), molecule.getAtoms());
         if (internalMolecule.isEmpty())
             this.molecules.add(internalMolecule);
         if (this.cache.count + molecule.getCount() > this.capacity)
@@ -81,9 +82,9 @@ public class SimpleElementContainer implements ElementContainer
     }
 
     @Override
-    public ChemistryMolecule removeMolecule(int count, ChemistryAtom... atoms)
+    public ChemistryMolecule removeMolecule(int count, ChemistryElementState state, ChemistryAtom... atoms)
     {
-        ChemistryMolecule molecule = this.findMatching(atoms);
+        ChemistryMolecule molecule = this.findMatching(state, atoms);
         if (molecule.isEmpty())
             return ChemistryMolecule.EMPTY;
 

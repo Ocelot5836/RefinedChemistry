@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "refinedchemistry:item/small_element_test_tube",
+    "layer1": "refinedchemistry:item/small_element_test_tube_solid_overlay"
+  }
+}

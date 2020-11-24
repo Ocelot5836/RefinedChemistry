@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "refinedchemistry:item/small_element_test_tube"
+  },
+  "overrides": [
+    { "predicate": { "refinedchemistry:element_state": 1 }, "model": "refinedchemistry:item/small_element_test_tube_solid" },
+    { "predicate": { "refinedchemistry:element_state": 2 }, "model": "refinedchemistry:item/small_element_test_tube_liquid" },
+    { "predicate": { "refinedchemistry:element_state": 3 }, "model": "refinedchemistry:item/small_element_test_tube_gas" }
+  ]
+}
