@@ -1,7 +1,6 @@
 package io.github.ocelot.refinedchemistry.common.registry;
 
 import io.github.ocelot.refinedchemistry.RefinedChemistry;
-import io.github.ocelot.refinedchemistry.common.network.play.SSyncElementContainer;
 import io.github.ocelot.refinedchemistry.common.network.play.handler.ChemistryClientPlayHandler;
 import io.github.ocelot.refinedchemistry.common.network.play.handler.ChemistryServerPlayHandler;
 import io.github.ocelot.sonar.common.network.SonarNetworkManager;
@@ -29,6 +28,5 @@ public class ChemistryMessages
         // Login
 
         // Play
-        PLAY_MANAGER.register(SSyncElementContainer.class, SSyncElementContainer::new, NetworkDirection.PLAY_TO_CLIENT);
     }
 }

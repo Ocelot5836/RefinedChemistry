@@ -65,7 +65,7 @@ public class ElementVialItem extends Item
             else
             {
                 stack.getCapability(ElementCapability.ELEMENT_CONTAINER_CAPABILITY).ifPresent(container -> container.insertMolecule(molecule));
-                ((ServerPlayerEntity) player).connection.sendPacket(new SSetSlotPacket(-2, player.inventory.currentItem == -1 ? player.inventory.mainInventory.size() + player.inventory.armorInventory.size() : player.inventory.currentItem, stack));
+                ((ServerPlayerEntity) player).connection.sendPacket(new SSetSlotPacket(-2, hand != Hand.MAIN_HAND || player.inventory.currentItem == -1 ? player.inventory.mainInventory.size() + player.inventory.armorInventory.size() : player.inventory.currentItem, stack));
             }
         }
         return ActionResult.func_233538_a_(stack, world.isRemote());
